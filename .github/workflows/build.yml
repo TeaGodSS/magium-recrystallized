@@ -15,25 +15,28 @@ jobs:
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
+      
       - name: setup node
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
+
+      - name: fix package.json scripts for windows
+        run: |
+          (Get-Content package.json) -replace 'VITE_TAURI_BUILD=true ', '' | Set-Content package.json
+        shell: powershell
 
       - name: install frontend dependencies
         run: npm install
 
-      - name: build frontend manually for windows
-        run: |
-          $env:VITE_TAURI_BUILD="true"
-          npm run build:tauri
-        shell: powershell
-
-      - uses: tauri-apps/tauri-action@v0
+      - name: build app
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_TAURI_BUILD: true
         with:
           tagName: app-v__VERSION__
           releaseName: "Magium Recrystallized v__VERSION__"
